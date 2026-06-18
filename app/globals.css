@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+@theme {
+  --font-display: var(--font-fraunces);
+  --font-sans:    var(--font-inter);
+
+  --color-paper:      #18130e;
+  --color-paper-dark: #352c22;
+  --color-surface:    #241c15;
+
+  --color-ink:        #ede4d8;
+  --color-ink-muted:  #b09880;
+  --color-ink-faint:  #7a6248;
+
+  --color-accent:       #d4623a;
+  --color-accent-light: #3d1e0e;
+
+  --color-winter:       #7ab4e8;
+  --color-winter-light: #0f1f33;
+  --color-spring:       #7abf8a;
+  --color-spring-light: #0f2418;
+  --color-summer:       #e8c060;
+  --color-summer-light: #2d220a;
+  --color-autumn:       #d4623a;
+  --color-autumn-light: #3d1e0e;
+}
+
+/* ── Root dark ───────────────────────────────────────────────── */
+
+html {
+  color-scheme: dark;
+  background-color: #18130e;
+}
+
+body {
+  background-color: #18130e;
+  color: #ede4d8;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+/* ── Surface / card override ─────────────────────────────────── */
+
+.bg-white {
+  background-color: #241c15 !important;
+}
+
+input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]),
+select,
+textarea {
+  background-color: #241c15;
+  color: #ede4d8;
+}
+
+/* ── Amber warning ───────────────────────────────────────────── */
+
+.bg-amber-50      { background-color: #2a1a08 !important; }
+.border-amber-200 { border-color:     #6b4016 !important; }
+.text-amber-800   { color:            #f5c97a !important; }
+
+/* ── Error / red ─────────────────────────────────────────────── */
+
+.bg-red-50               { background-color: #2d0f0f !important; }
+.border-red-200          { border-color:     #5c1a1a !important; }
+.text-red-600,
+.text-red-700            { color:            #f87171 !important; }
+.hover\:bg-red-50:hover  { background-color: #2d0f0f !important; }
+
+/* ── React Flow controls ─────────────────────────────────────── */
+
+.react-flow__controls {
+  background:   #241c15;
+  border-color: #352c22;
+  box-shadow:   none;
+}
+.react-flow__controls-button {
+  background:   #241c15;
+  border-color: #352c22;
+  fill:         #b09880;
+}
+.react-flow__controls-button:hover {
+  background: #352c22;
+}
+
+/* ── Print styles ────────────────────────────────────────────── */
+
+@media print {
+  @page { size: letter; margin: 0.6in; }
+
+  .no-print { display: none !important; }
+
+  html, body {
+    background: white !important;
+    color: black !important;
+    color-scheme: light !important;
+  }
+
+  .calendar-print-area {
+    background: white !important;
+    color: black !important;
+  }
+
+  .month-block { break-inside: avoid; }
+}
