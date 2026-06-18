@@ -17,7 +17,6 @@ import {
   type Node,
   type Edge,
   type NodeProps,
-  type NodeDragHandler,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import type { Person, Relationship } from '@/types'
@@ -475,8 +474,8 @@ export default function FamilyTreeCanvas({
   }, [calendarId])
 
   // After drag: update union positions and save person positions
-  const onNodeDragStop: NodeDragHandler = useCallback(
-    (_event, draggedNode) => {
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, draggedNode: Node) => {
       setNodes(current => {
         const personNodes = current
           .filter(n => n.type === 'personCard')
