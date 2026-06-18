@@ -116,15 +116,23 @@ const NODE_TYPES = { personCard: PersonCard, union: UnionNode }
 // ─── Layout helpers ───────────────────────────────────────────────
 
 /** Calculate where the union node for a couple should sit.
- *  Placed horizontally between the two partners at the card midline. */
-function unionPosition(
-  nodeA: Node,
-  nodeB: Node,
-): { x: number; y: number } {
-  const centerX = (nodeA.position.x + NODE_W / 2 + nodeB.position.x + NODE_W / 2) / 2
-  // Both partners are snapped to same Y, so just use nodeA
-  const centerY = nodeA.position.y + NODE_H / 2
-  return { x: centerX - UNION_R, y: centerY - UNION_R }
+ *  Always lands in the gap between the two partners at card midline.
+ *  Falls back to centering below them if they overlap. */
+function unionPosition(nodeA: Node, nodeB: Node): { x: number; y: number } {
+  const left  = nodeA.position.x <= nodeB.position.x ? nodeA : nodeB
+  const right = nodeA.position.x <= nodeB.position.x ? nodeB : nodeA
+
+  const leftRight = left.position.x + NODE_W   // right edge of left card
+  const rightLeft = right.position.x             // left edge of right card
+  const centerY   = (left.position.y + right.position.y) / 2 + NODE_H / 2
+
+  if (rightLeft > leftRight + UNION_R * 4) {
+    // Gap exists — place union in the middle of it
+    return { x: (leftRight + rightLeft) / 2 - UNION_R, y: centerY - UNION_R }
+  }
+  // Cards are too close or overlapping — float union below both
+  const centerX = (left.position.x + right.position.x + NODE_W) / 2
+  return { x: centerX - UNION_R, y: centerY + NODE_H / 2 }
 }
 
 /** Rebuild union nodes whenever person positions change. */

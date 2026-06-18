@@ -70,6 +70,15 @@ textarea {
 .text-red-700            { color:            #f87171 !important; }
 .hover\:bg-red-50:hover  { background-color: #2d0f0f !important; }
 
+/* ── React Flow — hide handles globally (routing still works) ── */
+
+.react-flow__handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 4px !important;
+  height: 4px !important;
+}
+
 /* ── React Flow controls ─────────────────────────────────────── */
 
 .react-flow__controls {
