@@ -115,24 +115,15 @@ const NODE_TYPES = { personCard: PersonCard, union: UnionNode }
 
 // ─── Layout helpers ───────────────────────────────────────────────
 
-/** Calculate where the union node for a couple should sit.
- *  Always lands in the gap between the two partners at card midline.
- *  Falls back to centering below them if they overlap. */
+/** Midpoint of the partner line, sitting ON the orange line as a junction dot. */
 function unionPosition(nodeA: Node, nodeB: Node): { x: number; y: number } {
+  // Horizontal midpoint of the line (between right-edge of left and left-edge of right)
   const left  = nodeA.position.x <= nodeB.position.x ? nodeA : nodeB
   const right = nodeA.position.x <= nodeB.position.x ? nodeB : nodeA
-
-  const leftRight = left.position.x + NODE_W   // right edge of left card
-  const rightLeft = right.position.x             // left edge of right card
-  const centerY   = (left.position.y + right.position.y) / 2 + NODE_H / 2
-
-  if (rightLeft > leftRight + UNION_R * 4) {
-    // Gap exists — place union in the middle of it
-    return { x: (leftRight + rightLeft) / 2 - UNION_R, y: centerY - UNION_R }
-  }
-  // Cards are too close or overlapping — float union below both
-  const centerX = (left.position.x + right.position.x + NODE_W) / 2
-  return { x: centerX - UNION_R, y: centerY + NODE_H / 2 }
+  const centerX = (left.position.x + NODE_W + right.position.x) / 2
+  // Vertical midpoint of the partner handles (card mid-height, snapped to same Y)
+  const centerY = (nodeA.position.y + nodeB.position.y) / 2 + NODE_H / 2
+  return { x: centerX - UNION_R, y: centerY - UNION_R }
 }
 
 /** Rebuild union nodes whenever person positions change. */
@@ -236,34 +227,23 @@ function buildElements(
   // ── Edges ──────────────────────────────────────────────────────
   const edges: Edge[] = []
 
-  // Partner → union edges (horizontal, no arrowhead)
+  // Partner line — drawn directly left→right (one edge, no union routing needed).
+  // The union node sits visually on top of this line as a junction for children.
   for (const r of partnerRels) {
-    const uid = `union-${r.id}`
-    const a   = personNodes.find(n => n.id === r.person_a_id)
-    const b   = personNodes.find(n => n.id === r.person_b_id)
+    const a = personNodes.find(n => n.id === r.person_a_id)
+    const b = personNodes.find(n => n.id === r.person_b_id)
     if (!a || !b) continue
 
     const leftId  = a.position.x <= b.position.x ? r.person_a_id : r.person_b_id
     const rightId = a.position.x <= b.position.x ? r.person_b_id : r.person_a_id
 
-    // Left partner's right handle → union's left handle
+    // left.right (source) → right.left (target) — both valid handle types
     edges.push({
-      id: `pa-${r.id}`,
+      id: `partner-${r.id}`,
       source: leftId,
-      target: uid,
+      target: rightId,
       sourceHandle: 'right',
       targetHandle: 'left',
-      type: 'straight',
-      style: { stroke: '#d4623a', strokeWidth: 2.5 },
-      markerEnd: undefined,
-    })
-    // Right partner's left handle → union's right handle
-    edges.push({
-      id: `pb-${r.id}`,
-      source: rightId,
-      target: uid,
-      sourceHandle: 'left',
-      targetHandle: 'right',
       type: 'straight',
       style: { stroke: '#d4623a', strokeWidth: 2.5 },
       markerEnd: undefined,
