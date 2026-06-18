@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ical from 'ical-generator'
+import ical, { ICalEventRepeatingFreq } from 'ical-generator'
 import { createServerClient } from '@/lib/supabase/server'
 
 export async function GET(
@@ -34,7 +34,7 @@ export async function GET(
         allDay: true,
         summary: `🎂 ${person.full_name}'s Birthday`,
         description: person.bio ?? undefined,
-        repeating: { freq: 'YEARLY' as const },
+        repeating: { freq: ICalEventRepeatingFreq.YEARLY },
       })
     }
 
@@ -50,7 +50,7 @@ export async function GET(
         end:   new Date(baseYear, person.death_month - 1, person.death_day),
         allDay: true,
         summary: `🕊 In memory of ${person.full_name}`,
-        repeating: { freq: 'YEARLY' as const },
+        repeating: { freq: ICalEventRepeatingFreq.YEARLY },
       })
     }
   }
@@ -69,7 +69,7 @@ export async function GET(
       end:   new Date(baseYear, rel.wedding_month - 1, rel.wedding_day),
       allDay: true,
       summary: `💍 ${personA.full_name} & ${personB.full_name} Anniversary`,
-      repeating: { freq: 'YEARLY' as const },
+      repeating: { freq: ICalEventRepeatingFreq.YEARLY },
     })
   }
 
