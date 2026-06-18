@@ -115,20 +115,16 @@ const NODE_TYPES = { personCard: PersonCard, union: UnionNode }
 
 // ─── Layout helpers ───────────────────────────────────────────────
 
-/** Calculate where the union node for a couple should sit. */
+/** Calculate where the union node for a couple should sit.
+ *  Placed horizontally between the two partners at the card midline. */
 function unionPosition(
   nodeA: Node,
   nodeB: Node,
 ): { x: number; y: number } {
-  const aLeft  = nodeA.position.x
-  const aRight = nodeA.position.x + NODE_W
-  const bLeft  = nodeB.position.x
-  const bRight = nodeB.position.x + NODE_W
-
-  const midX = (Math.min(aRight, bRight) + Math.max(aLeft, bLeft)) / 2
-  const midY = (nodeA.position.y + nodeB.position.y) / 2 + NODE_H / 2
-
-  return { x: midX - UNION_R, y: midY - UNION_R }
+  const centerX = (nodeA.position.x + NODE_W / 2 + nodeB.position.x + NODE_W / 2) / 2
+  // Both partners are snapped to same Y, so just use nodeA
+  const centerY = nodeA.position.y + NODE_H / 2
+  return { x: centerX - UNION_R, y: centerY - UNION_R }
 }
 
 /** Rebuild union nodes whenever person positions change. */
@@ -201,15 +197,27 @@ function buildElements(
 
   Dagre.layout(g)
 
+  // Snap partners to the same Y so partner lines stay horizontal
+  const snappedY: Record<string, number> = {}
+  for (const r of partnerRels) {
+    const pa = g.node(r.person_a_id)
+    const pb = g.node(r.person_b_id)
+    if (!pa || !pb) continue
+    const avg = (pa.y + pb.y) / 2
+    snappedY[r.person_a_id] = avg
+    snappedY[r.person_b_id] = avg
+  }
+
   // ── Person nodes ──────────────────────────────────────────────
   const personNodes: Node[] = people.map(p => {
     const pos   = g.node(p.id)
+    const rawY  = snappedY[p.id] ?? pos.y
     const saved = savedPositions[p.id]
     return {
       id: p.id,
       type: 'personCard',
       data: { person: p, isYou: p.id === myId, onEdit },
-      position: saved ?? { x: pos.x - NODE_W / 2, y: pos.y - NODE_H / 2 },
+      position: saved ?? { x: pos.x - NODE_W / 2, y: rawY - NODE_H / 2 },
     }
   })
 
@@ -220,18 +228,20 @@ function buildElements(
   // ── Edges ──────────────────────────────────────────────────────
   const edges: Edge[] = []
 
-  // Partner → union edges (no arrowhead)
+  // Partner → union edges (horizontal, no arrowhead)
   for (const r of partnerRels) {
     const uid = `union-${r.id}`
     const a   = personNodes.find(n => n.id === r.person_a_id)
     const b   = personNodes.find(n => n.id === r.person_b_id)
     if (!a || !b) continue
 
-    const aIsLeft = a.position.x <= b.position.x
+    const leftId  = a.position.x <= b.position.x ? r.person_a_id : r.person_b_id
+    const rightId = a.position.x <= b.position.x ? r.person_b_id : r.person_a_id
 
+    // Left partner's right handle → union's left handle
     edges.push({
       id: `pa-${r.id}`,
-      source: aIsLeft ? r.person_a_id : r.person_b_id,
+      source: leftId,
       target: uid,
       sourceHandle: 'right',
       targetHandle: 'left',
@@ -239,9 +249,10 @@ function buildElements(
       style: { stroke: '#d4623a', strokeWidth: 2.5 },
       markerEnd: undefined,
     })
+    // Right partner's left handle → union's right handle
     edges.push({
       id: `pb-${r.id}`,
-      source: aIsLeft ? r.person_b_id : r.person_a_id,
+      source: rightId,
       target: uid,
       sourceHandle: 'left',
       targetHandle: 'right',

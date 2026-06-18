@@ -152,6 +152,18 @@ export async function addRelationship(formData: FormData) {
   if (!['partner', 'parent_child'].includes(type)) return
 
   const supabase = createServerClient()
+
+  // Prevent duplicate relationships
+  const { data: existing } = await supabase
+    .from('relationships')
+    .select('id')
+    .eq('calendar_id', calendar_id)
+    .eq('type', type)
+    .eq('person_a_id', person_a_id)
+    .eq('person_b_id', person_b_id)
+    .maybeSingle()
+  if (existing) { revalidatePath(`/c/${slug}`); redirect(`/c/${slug}`) }
+
   await supabase.from('relationships').insert({
     calendar_id, type, person_a_id, person_b_id,
     status: type === 'partner' ? (status || 'married') : null,
