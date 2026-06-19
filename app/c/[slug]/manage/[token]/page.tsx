@@ -1,24 +1,14 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
-import { deleteRelationship, updateCalendar } from '@/app/actions'
+import { updateCalendar } from '@/app/actions'
 import SubmitButton from '@/app/components/SubmitButton'
-import DeleteButton from '@/app/components/DeleteButton'
 import ManagePersonList from './ManagePersonList'
+import RelationshipList from './RelationshipList'
 import type { Person, Relationship } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
-const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
-function fmtDate(month: number | null, day: number | null, year: number | null) {
-  if (!month && !day && !year) return null
-  const parts: string[] = []
-  if (month) parts.push(MONTHS_SHORT[month - 1])
-  if (day) parts.push(String(day))
-  if (year) parts.push(String(year))
-  return parts.join(' ')
-}
 
 const INPUT = 'rounded-lg border border-[--color-paper-dark] px-3 py-2 text-sm text-[--color-ink] placeholder:text-[--color-ink-faint] focus:outline-none focus:ring-2 focus:ring-[--color-accent]'
 
@@ -146,46 +136,14 @@ export default async function ManagePage({
           />
         </section>
 
-        {/* Relationships */}
-        {relList.length > 0 && (
-          <section className="mb-8">
-            <h2 className="mb-3 font-display text-lg font-medium text-[--color-ink]">
-              Relationships ({relList.length})
-            </h2>
-            <div className="flex flex-col gap-2">
-              {relList.map(rel => {
-                const personA = personList.find(p => p.id === rel.person_a_id)
-                const personB = personList.find(p => p.id === rel.person_b_id)
-                if (!personA || !personB) return null
-
-                const label = rel.type === 'partner'
-                  ? `${personA.full_name} & ${personB.full_name}${rel.status ? ` — ${rel.status}` : ''}`
-                  : `${personA.full_name} → parent of → ${personB.full_name}`
-                const wedding = rel.type === 'partner'
-                  ? fmtDate(rel.wedding_month, rel.wedding_day, rel.wedding_year)
-                  : null
-
-                return (
-                  <div key={rel.id} className="flex items-center gap-3 rounded-xl border border-[--color-paper-dark] bg-white p-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-[--color-ink]">{label}</p>
-                      {wedding && (
-                        <p className="text-xs text-[--color-ink-muted]">Wed {wedding}</p>
-                      )}
-                    </div>
-                    <form action={deleteRelationship}>
-                      <input type="hidden" name="id" value={rel.id} />
-                      <input type="hidden" name="calendar_id" value={calendar.id} />
-                      <input type="hidden" name="owner_token" value={token} />
-                      <input type="hidden" name="slug" value={slug} />
-                      <DeleteButton label="Delete" confirmMessage="Delete this relationship?" />
-                    </form>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
+        {/* Relationships — with inline edit for partners */}
+        <RelationshipList
+          relationships={relList}
+          people={personList}
+          calendarId={calendar.id}
+          ownerToken={token}
+          slug={slug}
+        />
 
       </div>
     </main>

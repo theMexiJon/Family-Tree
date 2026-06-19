@@ -212,6 +212,31 @@ export async function deleteRelationship(formData: FormData) {
   revalidatePath(`/c/${slug}/manage/${owner_token}`)
 }
 
+export async function editRelationship(formData: FormData) {
+  const id          = formData.get('id') as string
+  const calendar_id = formData.get('calendar_id') as string
+  const owner_token = formData.get('owner_token') as string
+  const slug        = formData.get('slug') as string
+  const status      = (formData.get('status') as string) || null
+  const wedding_month = formData.get('wedding_month') ? Number(formData.get('wedding_month')) : null
+  const wedding_day   = formData.get('wedding_day')   ? Number(formData.get('wedding_day'))   : null
+  const wedding_year  = formData.get('wedding_year')  ? Number(formData.get('wedding_year'))  : null
+
+  if (!id || !calendar_id || !owner_token) return
+
+  const supabase = createServerClient()
+  const { data: cal } = await supabase
+    .from('calendars').select('id').eq('id', calendar_id).eq('owner_token', owner_token).single()
+  if (!cal) return
+
+  await supabase.from('relationships')
+    .update({ status: status || null, wedding_month, wedding_day, wedding_year })
+    .eq('id', id).eq('calendar_id', calendar_id)
+
+  revalidatePath(`/c/${slug}`)
+  revalidatePath(`/c/${slug}/manage/${owner_token}`)
+}
+
 export async function saveNodePositions(
   calendarId: string,
   positions: Record<string, { x: number; y: number }>,

@@ -8,12 +8,19 @@ import MobilePersonList from './MobilePersonList'
 import AddPersonForm from './AddPersonForm'
 import AddRelationshipForm from './AddRelationshipForm'
 import AuthButton from '@/app/components/AuthButton'
+import { useRealtimeSync } from './useRealtimeSync'
 
 interface UpcomingEvent {
   daysUntil: number
   date: string
   label: string
   emoji: string
+}
+
+interface TreeStats {
+  generations: number
+  couples: number
+  oldest: { name: string; birthYear: number } | null
 }
 
 interface Props {
@@ -23,6 +30,7 @@ interface Props {
   slug: string
   userName: string | null
   upcomingEvents: UpcomingEvent[]
+  stats: TreeStats
 }
 
 export default function TreePageClient({
@@ -32,8 +40,10 @@ export default function TreePageClient({
   slug,
   userName,
   upcomingEvents,
+  stats,
 }: Props) {
   const [search, setSearch] = useState('')
+  const { isLive } = useRealtimeSync(calendar.id)
 
   const highlightIds = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -58,10 +68,20 @@ export default function TreePageClient({
           <h1 className="font-display text-3xl font-semibold text-[--color-ink] md:text-4xl">
             {calendar.name}
           </h1>
-          <p className="mt-1 text-sm text-[--color-ink-muted]">
-            {people.length} {people.length === 1 ? 'person' : 'people'} ·{' '}
-            {relationships.length} {relationships.length === 1 ? 'relationship' : 'relationships'}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-[--color-ink-muted]">
+            <span>{people.length} {people.length === 1 ? 'person' : 'people'}</span>
+            {stats.generations > 1 && <span>· {stats.generations} generations</span>}
+            {stats.couples > 0 && <span>· {stats.couples} {stats.couples === 1 ? 'couple' : 'couples'}</span>}
+            {stats.oldest && (
+              <span>· Oldest: {stats.oldest.name.split(' ')[0]} (b. {stats.oldest.birthYear})</span>
+            )}
+            {isLive && (
+              <span className="flex items-center gap-1 text-xs text-[--color-spring]">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[--color-spring]" />
+                Live
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <AuthButton userName={userName} returnTo={`/c/${slug}`} />

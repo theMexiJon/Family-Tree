@@ -48,6 +48,32 @@ function getUpcomingEvents(
   return events.sort((a, b) => a.daysUntil - b.daysUntil)
 }
 
+function computeStats(people: Person[], relationships: Relationship[]) {
+  const parentChild = relationships.filter(r => r.type === 'parent_child')
+  const parentsOf: Record<string, string[]> = {}
+  for (const r of parentChild) {
+    parentsOf[r.person_b_id] = [...(parentsOf[r.person_b_id] ?? []), r.person_a_id]
+  }
+
+  const gen: Record<string, number> = {}
+  function assignGen(id: string, g: number) {
+    if ((gen[id] ?? -1) >= g) return
+    gen[id] = g
+    for (const r of parentChild.filter(r => r.person_a_id === id)) assignGen(r.person_b_id, g + 1)
+  }
+  for (const p of people) if (!parentsOf[p.id]?.length) assignGen(p.id, 0)
+
+  const generations = people.length ? Math.max(0, ...Object.values(gen)) + 1 : 0
+  const couples     = relationships.filter(r => r.type === 'partner').length
+  const withYear    = people.filter(p => p.birth_year)
+  const oldestP     = withYear.length
+    ? withYear.reduce((a, b) => (a.birth_year! < b.birth_year! ? a : b))
+    : null
+  const oldest = oldestP ? { name: oldestP.full_name, birthYear: oldestP.birth_year! } : null
+
+  return { generations, couples, oldest }
+}
+
 export default async function CalendarPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const [supabase, user] = await Promise.all([
@@ -69,6 +95,7 @@ export default async function CalendarPage({ params }: { params: Promise<{ slug:
   const relList: Relationship[]    = relationships ?? []
   const userName                   = getUserDisplayName(user)
   const upcomingEvents             = getUpcomingEvents(personList, relList, calendar.show_memorial)
+  const stats                      = computeStats(personList, relList)
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -80,6 +107,7 @@ export default async function CalendarPage({ params }: { params: Promise<{ slug:
           slug={slug}
           userName={userName}
           upcomingEvents={upcomingEvents}
+          stats={stats}
         />
       </div>
     </main>
