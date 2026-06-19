@@ -18,9 +18,10 @@ interface Props {
   calendarId: string
   slug: string
   people: { id: string; full_name: string }[]
+  userName: string | null
 }
 
-export default function AddRelationshipForm({ calendarId, slug, people }: Props) {
+export default function AddRelationshipForm({ calendarId, slug, people, userName }: Props) {
   const [type, setType] = useState<'partner' | 'parent_child' | 'sibling'>('partner')
   const [personA, setPersonA] = useState('')
   const [personB, setPersonB] = useState('')
@@ -150,17 +151,26 @@ export default function AddRelationshipForm({ calendarId, slug, people }: Props)
         </>
       )}
 
-      {/* Added by */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[--color-ink]">
-          Your name <span className="text-[--color-accent]">*</span>
-        </label>
-        <input
-          name="added_by" type="text" required maxLength={80}
-          placeholder="e.g. Sarah Johnson"
-          className={`w-full ${INPUT}`}
-        />
-      </div>
+      {/* Added by — auto-filled from session when logged in */}
+      {userName ? (
+        <>
+          <input type="hidden" name="added_by" value={userName} />
+          <p className="text-xs text-[--color-ink-faint]">
+            Linking as <span className="font-medium text-[--color-ink-muted]">{userName}</span>
+          </p>
+        </>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-[--color-ink]">
+            Your name <span className="text-[--color-accent]">*</span>
+          </label>
+          <input
+            name="added_by" type="text" required maxLength={80}
+            placeholder="e.g. Sarah Johnson"
+            className={`w-full ${INPUT}`}
+          />
+        </div>
+      )}
 
       <SubmitButton label="Link these people" />
     </form>

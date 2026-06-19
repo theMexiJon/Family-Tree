@@ -168,6 +168,7 @@ export default function TreePageClient({
                 calendarId={calendar.id}
                 slug={slug}
                 people={peopleForForms}
+                userName={userName}
               />
             </div>
           </div>
