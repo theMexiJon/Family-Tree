@@ -34,7 +34,7 @@ export interface Person {
 export interface Relationship {
   id: string
   calendar_id: string
-  type: 'partner' | 'parent_child'
+  type: 'partner' | 'parent_child' | 'sibling'
   person_a_id: string
   person_b_id: string
   wedding_month: number | null

@@ -22,6 +22,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 import type { Person, Relationship } from '@/types'
 import EditPersonModal from './EditPersonModal'
+import PersonProfileModal from './PersonProfileModal'
 import { saveNodePositions } from '@/app/actions'
 
 // ─── Constants ────────────────────────────────────────────────────
@@ -33,10 +34,16 @@ type SavedPositions = Record<string, { x: number; y: number }>
 
 // ─── Person card ──────────────────────────────────────────────────
 
-type PersonData = { person: Person; isYou: boolean; onEdit: (p: Person) => void }
+type PersonData = {
+  person: Person
+  isYou: boolean
+  isHighlighted: boolean
+  onEdit: (p: Person) => void
+  onView: (p: Person) => void
+}
 
 function PersonCard({ data }: NodeProps) {
-  const { person, isYou, onEdit } = data as PersonData
+  const { person, isYou, isHighlighted, onEdit, onView } = data as PersonData
   const dates = [
     person.birth_year ? `b. ${person.birth_year}` : null,
     person.is_deceased ? (person.death_year ? `† ${person.death_year}` : '†') : null,
@@ -45,8 +52,13 @@ function PersonCard({ data }: NodeProps) {
   return (
     <div
       style={{ width: NODE_W, minHeight: NODE_H }}
-      className={`relative flex flex-col justify-between rounded-xl border bg-white px-3 py-3 shadow-sm transition-shadow hover:shadow-md ${
-        isYou ? 'border-[--color-accent] ring-1 ring-[--color-accent]/40' : 'border-[--color-paper-dark]'
+      onClick={() => onView(person)}
+      className={`relative flex cursor-pointer flex-col justify-between rounded-xl border bg-white px-3 py-3 shadow-sm transition-shadow hover:shadow-md ${
+        isHighlighted
+          ? 'border-[--color-summer] ring-2 ring-[--color-summer]/60'
+          : isYou
+            ? 'border-[--color-accent] ring-1 ring-[--color-accent]/40'
+            : 'border-[--color-paper-dark]'
       }`}
     >
       <Handle type="target" position={Position.Top}    style={{ opacity: 0, pointerEvents: 'none' }} />
@@ -89,6 +101,9 @@ function PersonCard({ data }: NodeProps) {
       >
         ✎ Edit
       </button>
+      <div className="pointer-events-none absolute bottom-1 left-3 text-[9px] text-[--color-ink-faint] opacity-0 transition-opacity group-hover:opacity-100">
+        tap to view
+      </div>
     </div>
   )
 }
@@ -151,13 +166,16 @@ function buildElements(
   people: Person[],
   relationships: Relationship[],
   onEdit: (p: Person) => void,
+  onView: (p: Person) => void,
   myId: string | null,
+  highlightIds: Set<string>,
   savedPositions: SavedPositions,
 ): { nodes: Node[]; edges: Edge[] } {
   if (people.length === 0) return { nodes: [], edges: [] }
 
   const partnerRels      = relationships.filter(r => r.type === 'partner')
   const parentChildRels  = relationships.filter(r => r.type === 'parent_child')
+  const siblingRels      = relationships.filter(r => r.type === 'sibling')
 
   // Build child → [parentId] map
   const parentsOf: Record<string, string[]> = {}
@@ -215,7 +233,13 @@ function buildElements(
     return {
       id: p.id,
       type: 'personCard',
-      data: { person: p, isYou: p.id === myId, onEdit },
+      data: {
+        person: p,
+        isYou: p.id === myId,
+        isHighlighted: highlightIds.size > 0 && highlightIds.has(p.id),
+        onEdit,
+        onView,
+      },
       position: saved ?? { x: pos.x - NODE_W / 2, y: rawY - NODE_H / 2 },
     }
   })
@@ -292,6 +316,28 @@ function buildElements(
         }
       }
     }
+  }
+
+  // Sibling edges — dashed horizontal line at same level
+  for (const r of siblingRels) {
+    const a = personNodes.find(n => n.id === r.person_a_id)
+    const b = personNodes.find(n => n.id === r.person_b_id)
+    if (!a || !b) continue
+    const leftId  = a.position.x <= b.position.x ? r.person_a_id : r.person_b_id
+    const rightId = a.position.x <= b.position.x ? r.person_b_id : r.person_a_id
+    edges.push({
+      id: `sib-${r.id}`,
+      source: leftId,
+      target: rightId,
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      type: 'straight',
+      style: { stroke: '#c08c2a', strokeWidth: 1.5, strokeDasharray: '6 4' },
+      markerEnd: undefined,
+      label: '~ sibling',
+      labelStyle: { fontSize: 9, fill: '#c08c2a' },
+      labelBgStyle: { fill: 'transparent' },
+    })
   }
 
   return { nodes, edges }
@@ -417,6 +463,7 @@ interface Props {
   slug: string
   calendarId: string
   savedPositions: SavedPositions
+  highlightIds?: Set<string>
 }
 
 export default function FamilyTreeCanvas({
@@ -425,9 +472,11 @@ export default function FamilyTreeCanvas({
   slug,
   calendarId,
   savedPositions: initialSavedPositions,
+  highlightIds = new Set<string>(),
 }: Props) {
-  const [myId, setMyId]                   = useState<string | null>(null)
-  const [editingPerson, setEditingPerson] = useState<Person | null>(null)
+  const [myId, setMyId]                     = useState<string | null>(null)
+  const [editingPerson, setEditingPerson]   = useState<Person | null>(null)
+  const [viewingPerson, setViewingPerson]   = useState<Person | null>(null)
   const [isSaving, setIsSaving]           = useState(false)
   const [, startTransition]               = useTransition()
 
@@ -445,21 +494,24 @@ export default function FamilyTreeCanvas({
   }, [slug, people])
 
   const onEdit = useCallback((p: Person) => setEditingPerson(p), [])
+  const onView = useCallback((p: Person) => setViewingPerson(p), [])
 
   const { nodes: initNodes, edges: initEdges } = useMemo(
-    () => buildElements(people, relationships, onEdit, myId, positionsRef.current),
+    () => buildElements(people, relationships, onEdit, onView, myId, highlightIds, positionsRef.current),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [people, relationships, onEdit, myId],
+    [people, relationships, onEdit, onView, myId],
   )
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges)
 
   useEffect(() => {
-    const { nodes: n, edges: e } = buildElements(people, relationships, onEdit, myId, positionsRef.current)
+    const { nodes: n, edges: e } = buildElements(
+      people, relationships, onEdit, onView, myId, highlightIds, positionsRef.current,
+    )
     setNodes(n)
     setEdges(e)
-  }, [people, relationships, onEdit, myId, setNodes, setEdges])
+  }, [people, relationships, onEdit, onView, myId, highlightIds, setNodes, setEdges])
 
   const scheduleSave = useCallback((positions: SavedPositions) => {
     positionsRef.current = positions
@@ -496,11 +548,11 @@ export default function FamilyTreeCanvas({
 
   const handleReset = useCallback(() => {
     positionsRef.current = {}
-    const { nodes: n, edges: e } = buildElements(people, relationships, onEdit, myId, {})
+    const { nodes: n, edges: e } = buildElements(people, relationships, onEdit, onView, myId, highlightIds, {})
     setNodes(n)
     setEdges(e)
     startTransition(async () => { await saveNodePositions(calendarId, {}) })
-  }, [people, relationships, onEdit, myId, calendarId, setNodes, setEdges])
+  }, [people, relationships, onEdit, onView, myId, highlightIds, calendarId, setNodes, setEdges])
 
   return (
     <>
@@ -543,6 +595,16 @@ export default function FamilyTreeCanvas({
         <p className="mt-1.5 text-center text-xs text-[--color-ink-faint]">
           Drag cards to rearrange · positions auto-saved · zoom with scroll
         </p>
+      )}
+
+      {viewingPerson && (
+        <PersonProfileModal
+          person={viewingPerson}
+          people={people}
+          relationships={relationships}
+          slug={slug}
+          onClose={() => setViewingPerson(null)}
+        />
       )}
 
       {editingPerson && (

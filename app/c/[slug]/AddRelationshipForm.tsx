@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function AddRelationshipForm({ calendarId, slug, people }: Props) {
-  const [type, setType] = useState<'partner' | 'parent_child'>('partner')
+  const [type, setType] = useState<'partner' | 'parent_child' | 'sibling'>('partner')
   const [personA, setPersonA] = useState('')
   const [personB, setPersonB] = useState('')
 
@@ -54,6 +54,15 @@ export default function AddRelationshipForm({ calendarId, slug, people }: Props)
             />
             Parent → Child
           </label>
+          <label className="flex cursor-pointer items-center gap-1.5 text-sm text-[--color-ink]">
+            <input
+              type="radio" name="type" value="sibling"
+              checked={type === 'sibling'}
+              onChange={() => setType('sibling')}
+              className="accent-[--color-accent]"
+            />
+            Siblings
+          </label>
         </div>
       </div>
 
@@ -61,7 +70,7 @@ export default function AddRelationshipForm({ calendarId, slug, people }: Props)
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <label className="mb-1 block text-xs font-medium text-[--color-ink-muted]">
-            {type === 'partner' ? 'Person A' : 'Parent'}
+            {type === 'partner' ? 'Person A' : type === 'sibling' ? 'Sibling A' : 'Parent'}
           </label>
           <select
             name="person_a_id"
@@ -81,7 +90,7 @@ export default function AddRelationshipForm({ calendarId, slug, people }: Props)
 
         <div className="flex-1">
           <label className="mb-1 block text-xs font-medium text-[--color-ink-muted]">
-            {type === 'partner' ? 'Person B' : 'Child'}
+            {type === 'partner' ? 'Person B' : type === 'sibling' ? 'Sibling B' : 'Child'}
           </label>
           <select
             name="person_b_id"
@@ -98,7 +107,7 @@ export default function AddRelationshipForm({ calendarId, slug, people }: Props)
         </div>
       </div>
 
-      {/* Partner-only fields */}
+      {/* Partner-only fields (hidden for sibling/parent_child) */}
       {type === 'partner' && (
         <>
           <div className="flex flex-col gap-2">

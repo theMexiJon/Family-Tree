@@ -18,9 +18,12 @@ interface Props {
   slug: string
   calendarId: string
   savedPositions: Record<string, { x: number; y: number }>
+  highlightIds?: Set<string>
 }
 
-export default function TreeWrapper({ people, relationships, slug, calendarId, savedPositions }: Props) {
+export default function TreeWrapper({
+  people, relationships, slug, calendarId, savedPositions, highlightIds,
+}: Props) {
   return (
     <FamilyTreeCanvas
       people={people}
@@ -28,6 +31,7 @@ export default function TreeWrapper({ people, relationships, slug, calendarId, s
       slug={slug}
       calendarId={calendarId}
       savedPositions={savedPositions}
+      highlightIds={highlightIds}
     />
   )
 }
