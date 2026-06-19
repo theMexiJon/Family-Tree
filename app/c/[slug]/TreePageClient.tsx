@@ -190,6 +190,12 @@ export default function TreePageClient({
             🌱 Start your own tree
           </Link>
           <Link
+            href={`/c/${slug}/snapshot`}
+            className="inline-flex items-center gap-2 rounded-lg border border-[--color-paper-dark] px-5 py-2.5 text-sm font-medium text-[--color-ink-muted] hover:bg-[--color-paper-dark]"
+          >
+            📤 Share to social
+          </Link>
+          <Link
             href={`/c/${slug}/print`}
             className="inline-flex items-center gap-2 rounded-lg border border-[--color-paper-dark] px-5 py-2.5 text-sm font-medium text-[--color-ink-muted] hover:bg-[--color-paper-dark]"
           >
