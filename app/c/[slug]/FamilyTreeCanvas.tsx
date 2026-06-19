@@ -19,8 +19,8 @@ import {
   type NodeProps,
   type OnNodeDrag,
 } from '@xyflow/react'
-import Dagre from '@dagrejs/dagre'
 import type { Person, Relationship } from '@/types'
+import { computeFamilyLayout } from './familyLayout'
 import EditPersonModal from './EditPersonModal'
 import PersonProfileModal from './PersonProfileModal'
 import { saveNodePositions } from '@/app/actions'
@@ -191,44 +191,12 @@ function buildElements(
     coupleToUnion[`${r.person_b_id}|${r.person_a_id}`] = uid
   }
 
-  // ── Dagre: position person nodes ──────────────────────────────
-  const g = new Dagre.graphlib.Graph()
-  g.setDefaultEdgeLabel(() => ({}))
-  g.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 120, marginx: 50, marginy: 50 })
-
-  people.forEach(p => g.setNode(p.id, { width: NODE_W, height: NODE_H }))
-
-  // Partner edges — same rank
-  for (const r of partnerRels) {
-    g.setEdge(r.person_a_id, r.person_b_id, { minlen: 1, weight: 10 })
-  }
-
-  // Parent-child: one edge per child (just for rank placement)
-  const rankedChildren = new Set<string>()
-  for (const r of parentChildRels) {
-    if (!rankedChildren.has(r.person_b_id)) {
-      g.setEdge(r.person_a_id, r.person_b_id, { weight: 1 })
-      rankedChildren.add(r.person_b_id)
-    }
-  }
-
-  Dagre.layout(g)
-
-  // Snap partners to the same Y so partner lines stay horizontal
-  const snappedY: Record<string, number> = {}
-  for (const r of partnerRels) {
-    const pa = g.node(r.person_a_id)
-    const pb = g.node(r.person_b_id)
-    if (!pa || !pb) continue
-    const avg = (pa.y + pb.y) / 2
-    snappedY[r.person_a_id] = avg
-    snappedY[r.person_b_id] = avg
-  }
+  // ── Smart family-tree layout (used for new nodes or after reset) ─
+  const autoLayout = computeFamilyLayout(people, relationships, NODE_W, NODE_H)
 
   // ── Person nodes ──────────────────────────────────────────────
   const personNodes: Node[] = people.map(p => {
-    const pos   = g.node(p.id)
-    const rawY  = snappedY[p.id] ?? pos.y
+    const auto  = autoLayout[p.id] ?? { x: 0, y: 0 }
     const saved = savedPositions[p.id]
     return {
       id: p.id,
@@ -240,7 +208,8 @@ function buildElements(
         onEdit,
         onView,
       },
-      position: saved ?? { x: pos.x - NODE_W / 2, y: rawY - NODE_H / 2 },
+      // Use saved position if available, otherwise use smart auto-layout
+      position: saved ?? auto,
     }
   })
 
