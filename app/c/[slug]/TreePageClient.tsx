@@ -134,6 +134,7 @@ export default function TreePageClient({
           people={people}
           relationships={relationships}
           slug={slug}
+          calendarId={calendar.id}
           searchQuery={search}
         />
       </div>

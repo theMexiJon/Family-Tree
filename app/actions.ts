@@ -33,7 +33,8 @@ export async function createCalendar(formData: FormData) {
   const supabase = createServerClient()
   const { error } = await supabase.from('calendars').insert({
     slug, owner_token, name, hemisphere, timezone, show_memorial,
-    user_id: user?.id ?? null,
+    user_id:     user?.id    ?? null,
+    owner_email: user?.email ?? null,
   })
 
   if (error) throw new Error('Failed to create calendar')
@@ -210,6 +211,41 @@ export async function deleteRelationship(formData: FormData) {
 
   revalidatePath(`/c/${slug}`)
   revalidatePath(`/c/${slug}/manage/${owner_token}`)
+}
+
+export async function addLifeEvent(formData: FormData) {
+  const person_id   = formData.get('person_id') as string
+  const calendar_id = formData.get('calendar_id') as string
+  const slug        = formData.get('slug') as string
+  const title       = (formData.get('title') as string)?.trim()
+  const date_month  = formData.get('date_month')  ? Number(formData.get('date_month'))  : null
+  const date_day    = formData.get('date_day')    ? Number(formData.get('date_day'))    : null
+  const date_year   = formData.get('date_year')   ? Number(formData.get('date_year'))   : null
+  const description = (formData.get('description') as string)?.trim() || null
+  const photo_url   = (formData.get('photo_url') as string)?.trim() || null
+  const added_by    = await resolveActor(formData)
+
+  if (!person_id || !calendar_id || !title) return
+
+  const supabase = createServerClient()
+  await supabase.from('life_events').insert({
+    person_id, calendar_id, title, date_month, date_day, date_year,
+    description, photo_url, added_by,
+  })
+
+  revalidatePath(`/c/${slug}`)
+}
+
+export async function deleteLifeEvent(formData: FormData) {
+  const id   = formData.get('id') as string
+  const slug = formData.get('slug') as string
+
+  if (!id) return
+
+  const supabase = createServerClient()
+  await supabase.from('life_events').delete().eq('id', id)
+
+  revalidatePath(`/c/${slug}`)
 }
 
 export async function editRelationship(formData: FormData) {

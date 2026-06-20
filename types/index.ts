@@ -7,7 +7,22 @@ export interface Calendar {
   timezone: string
   show_memorial: boolean
   user_id: string | null
+  owner_email: string | null
   node_positions: Record<string, { x: number; y: number }>
+  created_at: string
+}
+
+export interface LifeEvent {
+  id: string
+  person_id: string
+  calendar_id: string
+  title: string
+  date_month: number | null
+  date_day: number | null
+  date_year: number | null
+  description: string | null
+  photo_url: string | null
+  added_by: string
   created_at: string
 }
 

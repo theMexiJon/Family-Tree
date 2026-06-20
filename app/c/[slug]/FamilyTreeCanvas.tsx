@@ -572,6 +572,7 @@ export default function FamilyTreeCanvas({
           people={people}
           relationships={relationships}
           slug={slug}
+          calendarId={calendarId}
           onClose={() => setViewingPerson(null)}
         />
       )}

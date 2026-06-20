@@ -8,10 +8,11 @@ interface Props {
   people: Person[]
   relationships: Relationship[]
   slug: string
+  calendarId: string
   searchQuery: string
 }
 
-export default function MobilePersonList({ people, relationships, slug, searchQuery }: Props) {
+export default function MobilePersonList({ people, relationships, slug, calendarId, searchQuery }: Props) {
   const [viewing, setViewing] = useState<Person | null>(null)
 
   const filtered = searchQuery.trim()
@@ -81,6 +82,7 @@ export default function MobilePersonList({ people, relationships, slug, searchQu
           people={people}
           relationships={relationships}
           slug={slug}
+          calendarId={calendarId}
           onClose={() => setViewing(null)}
         />
       )}
