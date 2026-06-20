@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { getSessionUser, getUserDisplayName } from '@/lib/supabase/session'
 import { generateSlug, generateOwnerToken } from '@/lib/tokens'
 
@@ -235,6 +235,71 @@ export async function editRelationship(formData: FormData) {
 
   revalidatePath(`/c/${slug}`)
   revalidatePath(`/c/${slug}/manage/${owner_token}`)
+}
+
+export async function addLifeEventPhoto(formData: FormData) {
+  const calendar_id    = formData.get('calendar_id') as string
+  const slug           = formData.get('slug') as string
+  const person_id      = (formData.get('person_id') as string) || null
+  const relationship_id = (formData.get('relationship_id') as string) || null
+  const event_type     = formData.get('event_type') as string
+  const event_year     = Number(formData.get('event_year'))
+  const photo_url      = (formData.get('photo_url') as string)?.trim()
+  const caption        = (formData.get('caption') as string)?.trim() || null
+  const uploaded_by    = await resolveActor(formData)
+
+  if (!calendar_id || !photo_url || !event_type || !event_year) throw new Error('Missing required fields')
+  if (!['birthday', 'anniversary', 'memorial', 'custom'].includes(event_type)) throw new Error('Invalid event type')
+  if (!person_id && !relationship_id) throw new Error('Photo must be linked to a person or relationship')
+
+  const supabase = createServerClient()
+  const { error } = await supabase.from('life_event_photos').insert({
+    calendar_id, person_id, relationship_id, event_type, event_year, photo_url, caption, uploaded_by,
+  })
+
+  if (error) throw new Error('Failed to add photo')
+  revalidatePath(`/c/${slug}`)
+}
+
+export async function deleteLifeEventPhoto(formData: FormData) {
+  const id          = formData.get('id') as string
+  const calendar_id = formData.get('calendar_id') as string
+  const slug        = formData.get('slug') as string
+
+  if (!id || !calendar_id) return
+
+  const supabase = createServerClient()
+  await supabase.from('life_event_photos').delete().eq('id', id).eq('calendar_id', calendar_id)
+  revalidatePath(`/c/${slug}`)
+}
+
+export async function subscribeNotifications(formData: FormData) {
+  const calendar_id   = formData.get('calendar_id') as string
+  const email         = (formData.get('email') as string)?.trim().toLowerCase()
+  const days_before   = Number(formData.get('days_before')) || 7
+
+  if (!calendar_id || !email) throw new Error('Missing required fields')
+
+  const supabase = createServiceClient()
+
+  const { data: existing } = await supabase
+    .from('notification_subscribers')
+    .select('id')
+    .eq('calendar_id', calendar_id)
+    .eq('email', email)
+    .maybeSingle()
+
+  if (existing) {
+    await supabase
+      .from('notification_subscribers')
+      .update({ days_before })
+      .eq('id', existing.id)
+  } else {
+    const token = generateOwnerToken()
+    await supabase.from('notification_subscribers').insert({
+      calendar_id, email, days_before, token,
+    })
+  }
 }
 
 export async function saveNodePositions(

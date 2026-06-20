@@ -51,3 +51,25 @@ export type RelationshipWithPeople = Relationship & {
   person_a: Person
   person_b: Person
 }
+
+export interface LifeEventPhoto {
+  id: string
+  calendar_id: string
+  person_id: string | null
+  relationship_id: string | null
+  event_type: 'birthday' | 'anniversary' | 'memorial' | 'custom'
+  event_year: number
+  photo_url: string
+  caption: string | null
+  uploaded_by: string
+  created_at: string
+}
+
+export interface NotificationSubscriber {
+  id: string
+  calendar_id: string
+  email: string
+  days_before: number
+  token: string
+  created_at: string
+}

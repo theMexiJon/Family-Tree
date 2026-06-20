@@ -9,6 +9,7 @@ import AddPersonForm from './AddPersonForm'
 import AddRelationshipForm from './AddRelationshipForm'
 import AuthButton from '@/app/components/AuthButton'
 import { useRealtimeSync } from './useRealtimeSync'
+import NotifySubscribeForm from './NotifySubscribeForm'
 
 interface UpcomingEvent {
   daysUntil: number
@@ -194,6 +195,19 @@ export default function TreePageClient({
           </div>
         )}
       </div>
+
+      {/* ── Notification subscribe ─────────────────────────────── */}
+      {people.length > 0 && (
+        <div className="mt-8 rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-6">
+          <h2 className="font-display text-base font-medium text-[--color-ink]">
+            🔔 Get event reminders
+          </h2>
+          <p className="mt-1 text-sm text-[--color-ink-muted]">
+            Receive an email before birthdays and anniversaries so you can capture and share photos.
+          </p>
+          <NotifySubscribeForm calendarId={calendar.id} />
+        </div>
+      )}
 
       {/* ── CTA ────────────────────────────────────────────────── */}
       <div className="mt-8 rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-6 text-center">

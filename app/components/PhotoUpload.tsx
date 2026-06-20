@@ -6,9 +6,10 @@ import { getSupabaseClient } from '@/lib/supabase/client'
 interface Props {
   currentUrl?: string | null
   fieldName?: string
+  onUpload?: (url: string) => void
 }
 
-export default function PhotoUpload({ currentUrl, fieldName = 'photo_url' }: Props) {
+export default function PhotoUpload({ currentUrl, fieldName = 'photo_url', onUpload }: Props) {
   const [url, setUrl] = useState(currentUrl ?? '')
   const [preview, setPreview] = useState(currentUrl ?? '')
   const [uploading, setUploading] = useState(false)
@@ -44,6 +45,7 @@ export default function PhotoUpload({ currentUrl, fieldName = 'photo_url' }: Pro
     setUrl(publicUrl)
     setPreview(URL.createObjectURL(file))
     setUploading(false)
+    onUpload?.(publicUrl)
   }
 
   function remove() {

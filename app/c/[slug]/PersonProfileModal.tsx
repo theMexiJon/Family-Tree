@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { Person, Relationship } from '@/types'
 import EditPersonModal from './EditPersonModal'
+import EventPhotoGallery from './EventPhotoGallery'
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -209,6 +210,13 @@ export default function PersonProfileModal({ person, people, relationships, slug
               </div>
             </div>
           )}
+
+          {/* Event photo gallery */}
+          <EventPhotoGallery
+            personId={person.id}
+            calendarId={person.calendar_id}
+            slug={slug}
+          />
 
           <p className="mt-5 text-xs text-[--color-ink-faint]">Added by {person.added_by}</p>
         </div>
