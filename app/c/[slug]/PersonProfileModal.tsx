@@ -24,9 +24,22 @@ function fmtShort(m: number | null, d: number | null, y: number | null) {
   return [m ? MONTHS_SHORT[m - 1] : null, d, y].filter(Boolean).join(' ')
 }
 
-function calcAge(birthYear: number | null, endYear?: number | null): number | null {
+function calcAge(
+  birthYear: number | null,
+  birthMonth?: number | null,
+  birthDay?: number | null,
+  endYear?: number | null,
+): number | null {
   if (!birthYear) return null
-  return (endYear ?? new Date().getFullYear()) - birthYear
+  const today = new Date()
+  const refYear = endYear ?? today.getFullYear()
+  let age = refYear - birthYear
+  if (!endYear && birthMonth && birthDay) {
+    const m = today.getMonth() + 1
+    const d = today.getDate()
+    if (m < birthMonth || (m === birthMonth && d < birthDay)) age--
+  }
+  return age < 0 ? null : age
 }
 
 const INPUT = 'w-full rounded-lg border border-[--color-paper-dark] bg-[--color-surface] px-3 py-2 text-sm text-[--color-ink] placeholder:text-[--color-ink-faint] focus:outline-none focus:ring-2 focus:ring-[--color-accent]'
@@ -223,7 +236,7 @@ export default function PersonProfileModal({
 
   const birthDate = fmtDate(person.birth_month, person.birth_day, person.birth_year)
   const deathDate = person.is_deceased ? fmtDate(person.death_month, person.death_day, person.death_year) : null
-  const age = calcAge(person.birth_year, person.death_year)
+  const age = calcAge(person.birth_year, person.birth_month, person.birth_day, person.death_year)
 
   function handleDeleteEvent(id: string) {
     startTransition(async () => {
