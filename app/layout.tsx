@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -25,7 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col antialiased">{children}</body>
+      <body className="min-h-full flex flex-col antialiased">
+        {/* Language switcher — fixed top-right, always accessible */}
+        <div className="fixed top-3 right-3 z-40">
+          <LanguageSwitcher />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

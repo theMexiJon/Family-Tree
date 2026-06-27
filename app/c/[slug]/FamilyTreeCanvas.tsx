@@ -21,6 +21,8 @@ import {
 } from '@xyflow/react'
 import type { Person, Relationship } from '@/types'
 import { computeFamilyLayout } from './familyLayout'
+import { t } from '@/lib/i18n'
+import { useLocale } from '@/lib/useLocale'
 import EditPersonModal from './EditPersonModal'
 import PersonProfileModal from './PersonProfileModal'
 import { saveNodePositions } from '@/app/actions'
@@ -316,22 +318,17 @@ function buildElements(
 
 function CanvasControls({ onReset, isSaving }: { onReset: () => void; isSaving: boolean }) {
   const { fitView } = useReactFlow()
+  const locale = useLocale()
   return (
     <Panel position="bottom-right" className="mb-3 mr-3 flex items-center gap-1.5">
-      {isSaving && <span className="text-[10px] text-[--color-ink-faint]">Saving…</span>}
-      <button
-        onClick={() => fitView({ padding: 0.3, duration: 400 })}
-        title="Fit all cards in view"
-        className="rounded-lg border border-[--color-paper-dark] bg-[--color-surface] px-2.5 py-1.5 text-xs font-medium text-[--color-ink-muted] shadow-sm hover:bg-[--color-paper-dark]"
-      >
-        ⊞ Fit view
+      {isSaving && <span className="text-[10px] text-[--color-ink-faint]">{t('savingDots', locale)}</span>}
+      <button onClick={() => fitView({ padding: 0.3, duration: 400 })}
+        className="rounded-lg border border-[--color-paper-dark] bg-[--color-surface] px-2.5 py-1.5 text-xs font-medium text-[--color-ink-muted] shadow-sm hover:bg-[--color-paper-dark]">
+        {t('fitView', locale)}
       </button>
-      <button
-        onClick={onReset}
-        title="Reset to automatic layout"
-        className="rounded-lg border border-[--color-paper-dark] bg-[--color-surface] px-2.5 py-1.5 text-xs font-medium text-[--color-ink-muted] shadow-sm hover:bg-[--color-paper-dark]"
-      >
-        ↺ Reset layout
+      <button onClick={onReset}
+        className="rounded-lg border border-[--color-paper-dark] bg-[--color-surface] px-2.5 py-1.5 text-xs font-medium text-[--color-ink-muted] shadow-sm hover:bg-[--color-paper-dark]">
+        {t('resetLayout', locale)}
       </button>
     </Panel>
   )
@@ -345,6 +342,7 @@ function IdentityMenu({
   people: Person[]; slug: string; myId: string | null; onChange: (id: string | null) => void
 }) {
   const [open, setOpen] = useState(false)
+  const locale = useLocale()
   const me = people.find(p => p.id === myId)
 
   useEffect(() => {
@@ -367,7 +365,7 @@ function IdentityMenu({
         className="flex items-center gap-1.5 rounded-lg border border-[--color-paper-dark] bg-[--color-surface]/95 px-3 py-1.5 text-xs font-medium text-[--color-ink-muted] shadow-sm backdrop-blur-sm hover:bg-[--color-surface]"
       >
         <span>👤</span>
-        <span>{me ? me.full_name : 'Who are you?'}</span>
+        <span>{me ? me.full_name : t('whoAreYou', locale)}</span>
         <span className="opacity-50">{open ? '▲' : '▼'}</span>
       </button>
 
@@ -376,7 +374,7 @@ function IdentityMenu({
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-9 z-40 w-56 overflow-hidden rounded-xl border border-[--color-paper-dark] bg-[--color-surface] shadow-xl">
             <p className="border-b border-[--color-paper-dark] px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-[--color-ink-faint]">
-              Identify yourself
+              {t('identifyYourself', locale)}
             </p>
             <div className="max-h-64 overflow-y-auto">
               {people.map(p => (
@@ -397,7 +395,7 @@ function IdentityMenu({
                 onClick={() => pick(null)}
                 className="w-full border-t border-[--color-paper-dark] px-3 py-2 text-left text-xs text-[--color-ink-faint] hover:bg-[--color-paper-dark]"
               >
-                Clear
+                {t('clearMe', locale)}
               </button>
             )}
           </div>
@@ -410,15 +408,13 @@ function IdentityMenu({
 // ─── Empty state ──────────────────────────────────────────────────
 
 function EmptyState() {
+  const locale = useLocale()
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center" style={{ pointerEvents: 'none' }}>
       <div className="text-5xl">🌱</div>
       <div>
-        <p className="font-display text-lg font-medium text-[--color-ink]">No one in the tree yet</p>
-        <p className="mt-1 text-sm text-[--color-ink-muted]">Add the first family member using the form below.</p>
-      </div>
-      <div className="flex flex-wrap justify-center gap-4 text-xs text-[--color-ink-faint]">
-        <span>🎂 Birthdays</span><span>💍 Anniversaries</span><span>🖨 Printable calendar</span>
+        <p className="font-display text-lg font-medium text-[--color-ink]">{t('emptyTitle', locale)}</p>
+        <p className="mt-1 text-sm text-[--color-ink-muted]">{t('emptyDesc', locale)}</p>
       </div>
     </div>
   )

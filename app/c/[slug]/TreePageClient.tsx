@@ -9,6 +9,8 @@ import AddPersonForm from './AddPersonForm'
 import AddRelationshipForm from './AddRelationshipForm'
 import AuthButton from '@/app/components/AuthButton'
 import { useRealtimeSync } from './useRealtimeSync'
+import { t } from '@/lib/i18n'
+import { useLocale } from '@/lib/useLocale'
 
 interface UpcomingEvent {
   daysUntil: number
@@ -44,6 +46,7 @@ export default function TreePageClient({
 }: Props) {
   const [search, setSearch] = useState('')
   const { isLive } = useRealtimeSync(calendar.id)
+  const locale = useLocale()
 
   const highlightIds = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -70,15 +73,15 @@ export default function TreePageClient({
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-[--color-ink-muted]">
             <span>{people.length} {people.length === 1 ? 'person' : 'people'}</span>
-            {stats.generations > 1 && <span>· {stats.generations} generations</span>}
-            {stats.couples > 0 && <span>· {stats.couples} {stats.couples === 1 ? 'couple' : 'couples'}</span>}
+            {stats.generations > 1 && <span>· {stats.generations} {t('generations', locale)}</span>}
+            {stats.couples > 0 && <span>· {stats.couples} {t('couples', locale)}</span>}
             {stats.oldest && (
-              <span>· Oldest: {stats.oldest.name.split(' ')[0]} (b. {stats.oldest.birthYear})</span>
+              <span>· {t('oldest', locale)}: {stats.oldest.name.split(' ')[0]} (b. {stats.oldest.birthYear})</span>
             )}
             {isLive && (
               <span className="flex items-center gap-1 text-xs text-[--color-spring]">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[--color-spring]" />
-                Live
+                {t('live', locale)}
               </span>
             )}
           </div>
@@ -96,17 +99,17 @@ export default function TreePageClient({
           type="search"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search family members…"
+          placeholder={t('searchPlaceholder', locale)}
           className="w-full rounded-xl border border-[--color-paper-dark] bg-[--color-surface] py-2.5 pl-9 pr-4 text-sm text-[--color-ink] placeholder:text-[--color-ink-faint] focus:outline-none focus:ring-2 focus:ring-[--color-accent]"
         />
         {search && highlightIds.size > 0 && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[--color-ink-muted]">
-            {highlightIds.size} found
+            {highlightIds.size} {t('found', locale)}
           </span>
         )}
         {search && highlightIds.size === 0 && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[--color-ink-faint]">
-            No matches
+            {t('noMatches', locale)}
           </span>
         )}
       </div>
@@ -143,7 +146,7 @@ export default function TreePageClient({
       {upcomingEvents.length > 0 && (
         <div className="mt-8 rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-5">
           <h2 className="font-display text-base font-medium text-[--color-ink]">
-            📅 Coming up in the next 30 days
+            {t('upcomingTitle', locale)}
           </h2>
           <div className="mt-3 flex flex-col divide-y divide-[--color-paper-dark]">
             {upcomingEvents.map((ev, i) => (
@@ -155,7 +158,7 @@ export default function TreePageClient({
                 <div className="shrink-0 text-right text-xs text-[--color-ink-muted]">
                   <span>{ev.date}</span>
                   <span className="ml-2 text-[--color-ink-faint]">
-                    {ev.daysUntil === 0 ? 'today' : `in ${ev.daysUntil}d`}
+                    {ev.daysUntil === 0 ? t('today', locale) : `${t('inDays', locale)} ${ev.daysUntil}d`}
                   </span>
                 </div>
               </div>
@@ -167,10 +170,8 @@ export default function TreePageClient({
       {/* ── Forms ─────────────────────────────────────────────── */}
       <div className={`mt-8 grid gap-5 ${people.length >= 2 ? 'sm:grid-cols-2' : ''}`}>
         <div className="rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-6">
-          <h2 className="font-display text-lg font-medium text-[--color-ink]">Add a family member</h2>
-          <p className="mt-1 text-xs text-[--color-ink-muted]">
-            Just add their details — you can connect them to the tree later.
-          </p>
+          <h2 className="font-display text-lg font-medium text-[--color-ink]">{t('addMember', locale)}</h2>
+          <p className="mt-1 text-xs text-[--color-ink-muted]">{t('addMemberDesc', locale)}</p>
           <AddPersonForm
             calendarId={calendar.id}
             slug={slug}
@@ -182,10 +183,8 @@ export default function TreePageClient({
 
         {people.length >= 2 && (
           <div className="rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-6">
-            <h2 className="font-display text-lg font-medium text-[--color-ink]">Link two people</h2>
-            <p className="mt-1 text-xs text-[--color-ink-muted]">
-              Connect family members with a relationship.
-            </p>
+            <h2 className="font-display text-lg font-medium text-[--color-ink]">{t('linkPeople', locale)}</h2>
+            <p className="mt-1 text-xs text-[--color-ink-muted]">{t('linkPeopleDesc', locale)}</p>
             <div className="mt-5">
               <AddRelationshipForm
                 calendarId={calendar.id}
@@ -200,30 +199,17 @@ export default function TreePageClient({
 
       {/* ── CTA ────────────────────────────────────────────────── */}
       <div className="mt-8 rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-6 text-center">
-        <p className="font-display text-base font-medium text-[--color-ink]">
-          Want your own family calendar?
-        </p>
-        <p className="mt-1 text-sm text-[--color-ink-muted]">
-          Create a separate tree to share with your branch of the family.
-        </p>
+        <p className="font-display text-base font-medium text-[--color-ink]">{t('wantOwn', locale)}</p>
+        <p className="mt-1 text-sm text-[--color-ink-muted]">{t('startOwnDesc', locale)}</p>
         <div className="mt-4 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-[--color-accent] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-          >
-            🌱 Start your own tree
+          <Link href="/" className="inline-flex items-center gap-2 rounded-lg bg-[--color-accent] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90">
+            {t('startOwnTree', locale)}
           </Link>
-          <Link
-            href={`/c/${slug}/snapshot`}
-            className="inline-flex items-center gap-2 rounded-lg border border-[--color-paper-dark] px-5 py-2.5 text-sm font-medium text-[--color-ink-muted] hover:bg-[--color-paper-dark]"
-          >
-            📤 Share to social
+          <Link href={`/c/${slug}/snapshot`} className="inline-flex items-center gap-2 rounded-lg border border-[--color-paper-dark] px-5 py-2.5 text-sm font-medium text-[--color-ink-muted] hover:bg-[--color-paper-dark]">
+            {t('shareToSocial', locale)}
           </Link>
-          <Link
-            href={`/c/${slug}/print`}
-            className="inline-flex items-center gap-2 rounded-lg border border-[--color-paper-dark] px-5 py-2.5 text-sm font-medium text-[--color-ink-muted] hover:bg-[--color-paper-dark]"
-          >
-            🖨 Print calendar
+          <Link href={`/c/${slug}/print`} className="inline-flex items-center gap-2 rounded-lg border border-[--color-paper-dark] px-5 py-2.5 text-sm font-medium text-[--color-ink-muted] hover:bg-[--color-paper-dark]">
+            {t('printCalendar', locale)}
           </Link>
         </div>
       </div>

@@ -24,6 +24,16 @@ export async function proxy(request: NextRequest) {
   // Refresh session if expired — keeps auth cookies up to date for Server Components
   await supabase.auth.getUser()
 
+  // Auto-detect Mexican users and set Spanish as default (only on first visit)
+  if (!request.cookies.get('lang')) {
+    const acceptLang = request.headers.get('accept-language') ?? ''
+    if (acceptLang.includes('es-MX') || acceptLang.startsWith('es')) {
+      supabaseResponse.cookies.set('lang', 'es', {
+        path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax',
+      })
+    }
+  }
+
   return supabaseResponse
 }
 
