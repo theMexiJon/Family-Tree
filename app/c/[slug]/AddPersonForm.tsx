@@ -17,6 +17,9 @@ const SELECT = 'rounded-lg border border-[--color-paper-dark] px-2 py-2 text-sm 
 const LABEL = 'text-sm font-medium text-[--color-ink]'
 const OPTIONAL = 'text-xs font-normal text-[--color-ink-faint]'
 
+// Track whether the optional relationship section is expanded
+// Default: collapsed so the primary path is "just add person details"
+
 interface Props {
   calendarId: string
   slug: string
@@ -27,6 +30,7 @@ interface Props {
 
 export default function AddPersonForm({ calendarId, slug, people, showMemorial, userName }: Props) {
   const [isDeceased, setIsDeceased] = useState(false)
+  const [showRelSection, setShowRelSection] = useState(false)
   const [relatedTo, setRelatedTo] = useState('')
   const [relType, setRelType] = useState('partner')
 
@@ -167,12 +171,25 @@ export default function AddPersonForm({ calendarId, slug, people, showMemorial, 
         />
       </div>
 
-      {/* Relationship */}
+      {/* Relationship — hidden by default; owner can connect people later via "Link two people" */}
       {people.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => { setShowRelSection(v => !v); if (showRelSection) setRelatedTo('') }}
+            className="flex items-center gap-1.5 text-xs font-medium text-[--color-ink-faint] hover:text-[--color-ink-muted]"
+          >
+            <span>{showRelSection ? '▾' : '▸'}</span>
+            {showRelSection ? 'Remove relationship' : 'Also link to an existing person (optional)'}
+          </button>
+        </div>
+      )}
+
+      {people.length > 0 && showRelSection && (
         <div className="flex flex-col gap-3 rounded-xl border border-[--color-paper-dark] p-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="related_to" className={LABEL}>
-              Related to <span className={OPTIONAL}>(optional)</span>
+              Related to
             </label>
             <select
               id="related_to" name="related_to"

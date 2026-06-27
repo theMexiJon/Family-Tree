@@ -168,7 +168,9 @@ export default function TreePageClient({
       <div className={`mt-8 grid gap-5 ${people.length >= 2 ? 'sm:grid-cols-2' : ''}`}>
         <div className="rounded-2xl border border-[--color-paper-dark] bg-[--color-surface] p-6">
           <h2 className="font-display text-lg font-medium text-[--color-ink]">Add a family member</h2>
-          <p className="mt-1 text-xs text-[--color-ink-muted]">All fields except name are optional.</p>
+          <p className="mt-1 text-xs text-[--color-ink-muted]">
+            Just add their details — you can connect them to the tree later.
+          </p>
           <AddPersonForm
             calendarId={calendar.id}
             slug={slug}
